@@ -5,8 +5,16 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "linear-mcp"
 version = "0.1.0"
-description = "Linear MCP for Claude"
+description = "Linear MCP"
+authors = [
+    {name = "Vinayak Mehta", email = "vmehta94@gmail.com"},
+]
+readme = "README.md"
 requires-python = ">=3.10"
+license = {text = "MIT"}
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+]
 dependencies = [
     "httpx>=0.24.0",
     "mcp>=0.1.0",
@@ -15,3 +23,7 @@ dependencies = [
 
 [project.scripts]
 linear-mcp = "linear_mcp.main:main"
+
+[project.urls]
+"Homepage" = "https://github.com/vinayak-mehta/linear-mcp"
+"Bug Tracker" = "https://github.com/vinayak-mehta/linear-mcp/issues"
