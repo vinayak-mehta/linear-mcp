@@ -49,6 +49,111 @@ class LinearMCPClient:
         response.raise_for_status()
         return response.json()
 
+    def list_issues(self, limit: int = 50) -> List[Dict]:
+        """List recent issues.
+
+        Args:
+            limit: Maximum number of issues to return
+
+        Returns:
+            List of issues with basic details
+        """
+        query = """
+        query ListIssues($first: Int!) {
+            issues(first: $first, orderBy: updatedAt) {
+                nodes {
+                    id
+                    identifier
+                    title
+                    description
+                    priority
+                    state {
+                        id
+                        name
+                    }
+                    assignee {
+                        id
+                        name
+                    }
+                    team {
+                        id
+                        name
+                    }
+                    url
+                }
+            }
+        }
+        """
+
+        result = self._execute_query(query, {"first": limit})
+        issues = result.get("data", {}).get("issues", {}).get("nodes", [])
+
+        return [
+            {
+                "uri": f"linear-issue:///{issue['id']}",
+                "mimeType": "application/json",
+                "name": issue["title"],
+                "description": f"Linear issue {issue['identifier']}: {issue['title']}",
+                "metadata": {
+                    "identifier": issue["identifier"],
+                    "priority": issue.get("priority"),
+                    "status": issue.get("state", {}).get("name"),
+                    "assignee": issue.get("assignee", {}).get("name"),
+                    "team": issue.get("team", {}).get("name"),
+                },
+            }
+            for issue in issues
+        ]
+
+    def get_issue(self, issue_id: str) -> Dict:
+        """Get details for a specific issue.
+
+        Args:
+            issue_id: Issue ID
+
+        Returns:
+            Issue details
+        """
+        query = """
+        query GetIssue($id: ID!) {
+            issue(id: $id) {
+                id
+                identifier
+                title
+                description
+                priority
+                state {
+                    name
+                }
+                assignee {
+                    name
+                }
+                team {
+                    name
+                }
+                url
+            }
+        }
+        """
+
+        result = self._execute_query(query, {"id": issue_id})
+        issue = result.get("data", {}).get("issue", {})
+
+        if not issue:
+            raise ValueError(f"Issue {issue_id} not found")
+
+        return {
+            "id": issue["id"],
+            "identifier": issue["identifier"],
+            "title": issue["title"],
+            "description": issue["description"],
+            "priority": issue.get("priority"),
+            "status": issue.get("state", {}).get("name"),
+            "assignee": issue.get("assignee", {}).get("name"),
+            "team": issue.get("team", {}).get("name"),
+            "url": issue["url"],
+        }
+
     def create_issue(
         self,
         title: str,
@@ -102,6 +207,7 @@ class LinearMCPClient:
                 success
                 issue {
                     id
+                    identifier
                     title
                     description
                     priority
@@ -138,6 +244,7 @@ class LinearMCPClient:
         issue = issue_result.get("issue", {})
         return {
             "id": issue["id"],
+            "identifier": issue["identifier"],
             "title": issue["title"],
             "description": issue["description"],
             "priority": issue.get("priority"),
@@ -216,6 +323,7 @@ class LinearMCPClient:
                 success
                 issue {
                     id
+                    identifier
                     title
                     description
                     priority
@@ -256,6 +364,7 @@ class LinearMCPClient:
         issue = issue_result.get("issue", {})
         return {
             "id": issue["id"],
+            "identifier": issue["identifier"],
             "title": issue["title"],
             "description": issue["description"],
             "priority": issue.get("priority"),
@@ -308,6 +417,7 @@ class LinearMCPClient:
             issues(first: $first, filter: $filter) {
                 nodes {
                     id
+                    identifier
                     title
                     description
                     priority
@@ -367,6 +477,7 @@ class LinearMCPClient:
             return [
                 {
                     "id": issue["id"],
+                    "identifier": issue["identifier"],
                     "title": issue["title"],
                     "description": issue.get("description"),
                     "priority": issue.get("priority"),
@@ -420,6 +531,7 @@ class LinearMCPClient:
                     assignedIssues(first: $first, includeArchived: $includeArchived) {
                         nodes {
                             id
+                            identifier
                             title
                             description
                             priority
@@ -456,6 +568,7 @@ class LinearMCPClient:
                     assignedIssues(first: $first, includeArchived: $includeArchived) {
                         nodes {
                             id
+                            identifier
                             title
                             description
                             priority
@@ -488,6 +601,7 @@ class LinearMCPClient:
         return [
             {
                 "id": issue["id"],
+                "identifier": issue["identifier"],
                 "title": issue["title"],
                 "description": issue.get("description"),
                 "priority": issue.get("priority"),
@@ -558,4 +672,165 @@ class LinearMCPClient:
             "body": comment["body"],
             "user": comment["user"]["name"] if comment.get("user") else None,
             "created_at": comment["createdAt"],
+        }
+
+    def get_team_issues(self, team_id: str) -> List[Dict]:
+        """Get issues for a specific team.
+
+        Args:
+            team_id: Team ID
+
+        Returns:
+            List of team issues
+        """
+        query = """
+        query GetTeamIssues($teamId: ID!) {
+            team(id: $teamId) {
+                issues {
+                    nodes {
+                        id
+                        identifier
+                        title
+                        description
+                        priority
+                        state {
+                            name
+                        }
+                        assignee {
+                            name
+                        }
+                        url
+                    }
+                }
+            }
+        }
+        """
+
+        result = self._execute_query(query, {"teamId": team_id})
+
+        if not result.get("data", {}).get("team"):
+            raise ValueError(f"Team {team_id} not found")
+
+        issues = (
+            result.get("data", {}).get("team", {}).get("issues", {}).get("nodes", [])
+        )
+
+        return [
+            {
+                "id": issue["id"],
+                "identifier": issue["identifier"],
+                "title": issue["title"],
+                "description": issue.get("description"),
+                "priority": issue.get("priority"),
+                "status": issue.get("state", {}).get("name"),
+                "assignee": issue.get("assignee", {}).get("name"),
+                "url": issue["url"],
+            }
+            for issue in issues
+        ]
+
+    def get_viewer(self) -> Dict:
+        """Get information about the authenticated user.
+
+        Returns:
+            User information including teams and organization
+        """
+        query = """
+        query {
+            viewer {
+                id
+                name
+                email
+                admin
+                teams {
+                    nodes {
+                        id
+                        name
+                        key
+                    }
+                }
+            }
+            organization {
+                id
+                name
+                urlKey
+            }
+        }
+        """
+
+        result = self._execute_query(query)
+
+        viewer = result.get("data", {}).get("viewer", {})
+        organization = result.get("data", {}).get("organization", {})
+
+        return {
+            "id": viewer["id"],
+            "name": viewer["name"],
+            "email": viewer.get("email"),
+            "admin": viewer.get("admin"),
+            "teams": [
+                {"id": team["id"], "name": team["name"], "key": team["key"]}
+                for team in viewer.get("teams", {}).get("nodes", [])
+            ],
+            "organization": {
+                "id": organization["id"],
+                "name": organization["name"],
+                "urlKey": organization["urlKey"],
+            },
+        }
+
+    def get_organization(self) -> Dict:
+        """Get information about the organization.
+
+        Returns:
+            Organization information including teams and users
+        """
+        query = """
+        query {
+            organization {
+                id
+                name
+                urlKey
+                teams {
+                    nodes {
+                        id
+                        name
+                        key
+                    }
+                }
+                users {
+                    nodes {
+                        id
+                        name
+                        email
+                        admin
+                        active
+                    }
+                }
+            }
+        }
+        """
+
+        result = self._execute_query(query)
+
+        organization = result.get("data", {}).get("organization", {})
+
+        return {
+            "id": organization["id"],
+            "name": organization["name"],
+            "urlKey": organization["urlKey"],
+            "teams": [
+                {"id": team["id"], "name": team["name"], "key": team["key"]}
+                for team in organization.get("teams", {}).get("nodes", [])
+            ],
+            "users": [
+                {
+                    "id": user["id"],
+                    "name": user["name"],
+                    "email": user.get("email"),
+                    "admin": user.get("admin"),
+                    "active": user.get("active"),
+                }
+                for user in organization.get("users", {}).get("nodes", [])
+            ],
         }
