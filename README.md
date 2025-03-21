@@ -24,6 +24,26 @@ export LINEAR_API_KEY=lin_api_xxxxxxxxxxxx
 uvx --from git+https://github.com/vinayak-mehta/linear-mcp linear-mcp
 ```
 
+### Docker
+```bash
+docker build -t linear-mcp:latest .
+docker run -it --rm -e LINEAR_API=lin_api_xxxxxx linear-mcp:latest
+```
+And to use this in Claude Desktop, it would look like this:
+```json
+    "linear-mcp-server": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-it",
+        "--rm",
+        "-e",
+        "LINEAR_API_KEY=lin_api_xxxxxx",
+        "linear-mcp-server:latest"
+      ]
+    }
+```
+
 ## Resources
 
 Linear MCP provides access to the following resource types:
