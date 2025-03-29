@@ -2,6 +2,10 @@
 
 A Model Context Protocol (MCP) server for Linear, providing tools for issue tracking and project management.
 
+<a href="https://glama.ai/mcp/servers/4t9pgjso9u">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/4t9pgjso9u/badge" alt="Linear Server MCP server" />
+</a>
+
 ## Configuration
 
 Go to [Linear security settings](https://linear.app/settings/account/security) and create an API key:
