@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mcp-linear"
-version = "0.1.0"
+version = "0.1.1"
 description = "Linear MCP Server"
 authors = [
     {name = "Vinayak Mehta", email = "vmehta94@gmail.com"},
@@ -22,8 +22,8 @@ dependencies = [
 ]
 
 [project.scripts]
-mcp-linear = "linear_mcp.main:main"
-linear-mcp = "linear_mcp.main:main"
+mcp-linear = "mcp_linear.main:main"
+linear-mcp = "mcp_linear.main:main"
 
 [project.urls]
 "Homepage" = "https://github.com/vinayak-mehta/linear-mcp"
